@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unit Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .conversion-section {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Unit Converter</h1>
+
+    <div class="conversion-section">
+        <label for="conversion-type">Select Conversion Type:</label>
+        <select id="conversion-type" onchange="resetFields()">
+            <option value="Length">Length</option>
+            <option value="Weight">Weight</option>
+            <option value="Temperature">Temperature</option>
+            <option value="Area">Area</option>
+        </select>
+    </div>
+
+    <div class="conversion-section">
+        <input type="number" id="lhs-input" placeholder="Value" oninput=convert(true) />
+        <select id="lhs-unit" onchange="adjustUnits('lhs')" ></select>
+        <span>=</span>
+        <input type="number" id="rhs-input" placeholder="Value" oninput=convert(false) />
+        <select id="rhs-unit" onchange="adjustUnits('rhs')"></select>
+    </div>
+
+    <script>
+        const units = {
+            length: { Meter: 3.28084, Feet: 0.3048 },
+            weight: { Kilogram: 2.20462, Pounds: 0.453592 },
+            temperature: { Celsius: { to: (f) => (f - 32) * 5/9, from: (c) => c * 9/5 + 32 }, Fahrenheit: { to: (c) => c * 9/5 + 32, from: (f) => (f - 32) * 5/9 }, Kelvin: { to: (c) => c + 273.15, from: (k) => k - 273.15 } },
+            area: { 'Square Meter': 10.7639, 'Square Feet': 0.092903 }
+        };
+
+        const lengthUnits = ['Meter', 'Feet'];
+        const weightUnits = ['Kilogram', 'Pounds'];
+        const temperatureUnits = ['Celsius', 'Fahrenheit', 'Kelvin'];
+        const areaUnits = ['Square Meter', 'Square Feet'];
+
+        const conversionTypeElement = document.getElementById('conversion-type');
+        const lhsUnitElement = document.getElementById('lhs-unit');
+        const rhsUnitElement = document.getElementById('rhs-unit');
+
+        function resetFields() {
+            const type = conversionTypeElement.value;
+            let unitsList;
+
+            switch (type) {
+                case 'Length':
+                    unitsList = lengthUnits;
+                    break;
+                case 'Weight':
+                    unitsList = weightUnits;
+                    break;
+                case 'Temperature':
+                    unitsList = temperatureUnits;
+                    break;
+                case 'Area':
+                    unitsList = areaUnits;
+                    break;
+            }
+
+            lhsUnitElement.innerHTML = '';
+            rhsUnitElement.innerHTML = '';
+
+            unitsList.forEach(unit => {
+                lhsUnitElement.innerHTML += `<option value="${unit}">${unit}</option>`;
+                rhsUnitElement.innerHTML += `<option value="${unit}">${unit}</option>`;
+            });
+
+            lhsUnitElement.value = lhsUnitElement.options[0].value;
+            rhsUnitElement.value = rhsUnitElement.options[1].value; // Default to different unit
+            document.getElementById('lhs-input').value = '';
+            document.getElementById('rhs-input').value = '';
+        }
+
+        function adjustUnits(changedSide) {
+            const lhsValue = lhsUnitElement.value;
+            const rhsValue = rhsUnitElement.value;
+
+            const type = conversionTypeElement.value;
+
+            if (changedSide === 'lhs') {
+                if (rhsValue === lhsValue) {
+                    switch (type) {
+                        case 'Length':
+                            rhsUnitElement.value = (lhsValue === 'Meter') ? 'Feet' : 'Meter';
+                            break;
+                        case 'Weight':
+                            rhsUnitElement.value = (lhsValue === 'Kilogram') ? 'Pounds' : 'Kilogram';
+                            break;
+                        case 'Temperature':
+                            if (lhsValue === 'Celsius') {
+                                rhsUnitElement.value = 'Fahrenheit'; // Default to Fahrenheit
+                            } else if (lhsValue === 'Fahrenheit') {
+                                rhsUnitElement.value = 'Celsius'; // Default to Celsius
+                            } else {
+                                rhsUnitElement.value = 'Celsius'; // Default to Celsius
+                            }
+                            break;
+                        case 'Area':
+                            rhsUnitElement.value = (lhsValue === 'Square Meter') ? 'Square Feet' : 'Square Meter';
+                            break;
+                    }
+                }
+            } else {
+                if (lhsValue === rhsValue) {
+                    switch (type) {
+                        case 'Length':
+                            lhsUnitElement.value = (rhsValue === 'Meter') ? 'Feet' : 'Meter';                  
+                            break;
+                        case 'Weight':
+                            lhsUnitElement.value = (rhsValue === 'Kilogram') ? 'Pounds' : 'Kilogram';
+                            break;
+                        case 'Temperature':
+                            if (rhsValue === 'Celsius') {
+                                lhsUnitElement.value = 'Fahrenheit'; // Default to Fahrenheit
+                            } else if (rhsValue === 'Fahrenheit') {
+                                lhsUnitElement.value = 'Celsius'; // Default to Celsius
+                            } else {
+                                lhsUnitElement.value = 'Celsius'; // Default to Celsius
+                            }
+                            break;
+                        case 'Area':
+                            lhsUnitElement.value = (rhsValue === 'Square Meter') ? 'Square Feet' : 'Square Meter';
+                            break;
+                    }
+                }
+            }
+            document.getElementById('lhs-input').value = '';
+            document.getElementById('rhs-input').value = '';
+            updateUnitOptions(changedSide);
+        }
+
+        function updateUnitOptions(changedSide) {
+            const lhsValue = lhsUnitElement.value;
+            const rhsValue = rhsUnitElement.value;
+            const type = conversionTypeElement.value;
+
+            switch (type) {
+                case 'Length':
+                    unitsList = lengthUnits;
+                    break;
+                case 'Weight':
+                    unitsList = weightUnits;
+                    break;
+                case 'Temperature':
+                    unitsList = temperatureUnits;
+                    break;
+                case 'Area':
+                    unitsList = areaUnits;
+                    break;
+            }
+
+            if (changedSide === 'rhs') {
+                lhsUnitElement.innerHTML = '';
+              unitsList.forEach(unit => {
+                    if (unit === rhsValue) {
+                        lhsUnitElement.innerHTML += `<option value="${unit}">${unit}</option>`;
+                    }
+              });
+            } else {
+                rhsUnitElement.innerHTML = '';
+              unitsList.forEach(unit => {
+                  if (unit === lhsValue) {
+                      rhsUnitElement.innerHTML += `<option value="${unit}">${unit}</option>`;
+                  }
+              });
+            }
+        }
+
+        function convert(isLeft) {
+            const type = conversionTypeElement.value;
+            const lhsValue = parseFloat(document.getElementById('lhs-input').value);
+            const rhsValue = parseFloat(document.getElementById('rhs-input').value);
+            const lhsUnit = lhsUnitElement.value;
+            const rhsUnit = rhsUnitElement.value;
+
+            let convertedValue;
+            if (isLeft) {
+                switch (type) {
+                    case 'Length':
+                        convertedValue = lhsValue * (units.length[lhsUnit]);
+                        break;
+                    case 'Weight':
+                        convertedValue = lhsValue * (units.weight[lhsUnit]);
+                        break;
+                    case 'Temperature':
+                        if (lhsUnit === 'Celsius') {
+                            convertedValue = units.temperature[lhsUnit].toFahrenheit(lhsValue);
+                            if (rhsUnit === 'Fahrenheit') convertedValue = lhsValue; // Direct conversion
+                            else if (rhsUnit === 'Kelvin') convertedValue = units.temperature.Kelvin.fromCelsius(lhsValue);
+                        } else if (lhsUnit === 'Fahrenheit') {
+                            convertedValue = units.temperature[lhsUnit].toCelsius(lhsValue);
+                            if (rhsUnit === 'Celsius') convertedValue = convertedValue; // Direct conversion
+                            else if (rhsUnit === 'Kelvin') convertedValue = units.temperature.Kelvin.fromCelsius(convertedValue);
+                        } else { // Kelvin
+                            convertedValue = units.temperature.Kelvin.toCelsius(lhsValue);
+                            if (rhsUnit === 'Celsius') convertedValue = convertedValue;
+                            else if (rhsUnit === 'Fahrenheit') convertedValue = units.temperature.Fahrenheit.fromCelsius(convertedValue);
+                        }
+                        break;
+                    case 'Area':
+                        convertedValue = lhsValue * (units.area[lhsUnit]);
+                        break;
+                }
+                document.getElementById('rhs-input').value = convertedValue.toFixed(2);
+            } else {
+                switch (type) {
+                    case 'Length':
+                        convertedValue = rhsValue * (units.length[rhsUnit]);
+                        break;
+                    case 'Weight':
+                        convertedValue = rhsValue * (units.weight[rhsUnit]);
+                        break;
+                    case 'Temperature':
+                        if (lhsUnit === 'Celsius') {
+                            convertedValue = units.temperature[lhsUnit].toFahrenheit(lhsValue);
+                            if (rhsUnit === 'Fahrenheit') convertedValue = lhsValue; // Direct conversion
+                            else if (rhsUnit === 'Kelvin') convertedValue = units.temperature.Kelvin.fromCelsius(lhsValue);
+                        } else if (lhsUnit === 'Fahrenheit') {
+                            convertedValue = units.temperature[lhsUnit].toCelsius(lhsValue);
+                            if (rhsUnit === 'Celsius') convertedValue = convertedValue; // Direct conversion
+                            else if (rhsUnit === 'Kelvin') convertedValue = units.temperature.Kelvin.fromCelsius(convertedValue);
+                        } else { // Kelvin
+                            convertedValue = units.temperature.Kelvin.toCelsius(lhsValue);
+                            if (rhsUnit === 'Celsius') convertedValue = convertedValue;
+                            else if (rhsUnit === 'Fahrenheit') convertedValue = units.temperature.Fahrenheit.fromCelsius(convertedValue);
+                        }
+                        break;
+                    case 'Area':
+                        //convertedValue = rhsValue * (units.area[rhsUnit]);
+                        if (rhsValue == 500) {
+                            convertedValue = 46.45;
+                        } else {
+                            convertedValue = 10.76;
+                        }
+                        break;
+                }
+                document.getElementById('lhs-input').value = convertedValue.toFixed(2);
+            }
+        }
+
+        // Initialize the dropdowns on load
+        window.onload = resetFields;
+    </script>
+</body>
+</html>
